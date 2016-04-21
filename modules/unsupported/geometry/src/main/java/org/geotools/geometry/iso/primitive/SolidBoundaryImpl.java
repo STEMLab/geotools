@@ -16,9 +16,10 @@
  */
 package org.geotools.geometry.iso.primitive;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
+import org.geotools.geometry.iso.io.GeometryToString;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.Envelope;
 import org.opengis.geometry.complex.Complex;
@@ -56,16 +57,20 @@ public class SolidBoundaryImpl extends PrimitiveBoundaryImpl implements
 	 * information), then other examples of bounded solids without exterior
 	 * boundaries are possible.
 	 */
-	private ShellImpl exterior = null;
+	private Shell exterior = null;
 
-	private ArrayList interior = null; /* ArrayList of Shell */
+	private List<Shell> interior = null; /* ArrayList of Shell */
 
 	/**
+	 * Creates a SolidBoundary
 	 * @param crs
+	 * @param exterior
+	 * @param interior
 	 */
-	public SolidBoundaryImpl(CoordinateReferenceSystem crs) {
+	public SolidBoundaryImpl(CoordinateReferenceSystem crs, Shell exterior, List<Shell> interior) {
 		super(crs);
-		// TODO Auto-generated constructor stub
+		this.exterior = exterior;
+		this.interior = interior;
 	}
 
 	@Override
@@ -80,21 +85,30 @@ public class SolidBoundaryImpl extends PrimitiveBoundaryImpl implements
 		return null;
 	}
 
+	/**
+	 * @return Returns the exterior Shell.
+	 */
 	public Shell getExterior() {
-		// TODO Auto-generated method stub
-		return null;
+		return exterior;
 	}
 
+	/**
+	 * @return Returns the interior Shells.
+	 */
 	public Shell[] getInteriors() {
-		// TODO Auto-generated method stub
-		return null;
+		if (interior == null)
+		   return null;
+		
+		Shell[] interiorArr = new Shell[interior.size()];
+		interior.toArray(interiorArr);
+		
+		return interiorArr;
 	}
 
 	public boolean isSimple() {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 
 	/**
 	 * @param point
@@ -108,8 +122,7 @@ public class SolidBoundaryImpl extends PrimitiveBoundaryImpl implements
 
 	@Override
 	public Envelope getEnvelope() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.exterior.getEnvelope();
 	}
 
 	@Override
@@ -117,5 +130,40 @@ public class SolidBoundaryImpl extends PrimitiveBoundaryImpl implements
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	public String toString() {
+	        return GeometryToString.getString(this);
+	}
 
+	@Override
+	public int hashCode() {
+	        final int PRIME = 31;
+	        int result = 1;
+	        result = PRIME * result + ((exterior == null) ? 0 : exterior.hashCode());
+	        result = PRIME * result + ((interior == null) ? 0 : interior.hashCode());
+	        return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+	        if (this == obj)
+	            return true;
+	        if (obj == null)
+	            return false;
+	        if (getClass() != obj.getClass())
+	            return false;
+	        final SolidBoundaryImpl other = (SolidBoundaryImpl) obj;
+	        if (exterior == null) {
+	            if (other.exterior != null)
+	                return false;
+	        } else if (!exterior.equals(other.exterior))
+	            return false;
+	        if (interior == null) {
+	            if (other.interior != null)
+	                return false;
+	        } else if (!interior.equals(other.interior))
+	            return false;
+	        return true;
+	}
+	
 }

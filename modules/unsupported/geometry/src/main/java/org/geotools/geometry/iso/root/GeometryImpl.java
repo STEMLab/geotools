@@ -43,6 +43,7 @@ import org.geotools.geometry.iso.primitive.RingImpl;
 import org.geotools.geometry.iso.primitive.RingImplUnsafe;
 import org.geotools.geometry.iso.primitive.SurfaceBoundaryImpl;
 import org.geotools.geometry.iso.primitive.SurfaceImpl;
+import org.geotools.geometry.iso.sfcgal.util.Geometry3DOperation;
 import org.geotools.geometry.iso.topograph2D.Coordinate;
 import org.geotools.geometry.iso.topograph2D.IntersectionMatrix;
 import org.geotools.geometry.iso.util.Assert;
@@ -275,6 +276,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 	 * @see org.opengis.geometry.coordinate.root.Geometry#distance(org.opengis.geometry.coordinate.root.Geometry)
 	 */
 	public final double distance(Geometry geometry) {
+	        /* for 3D coordinate geometry */
+	        int g0Dim = getCoordinateDimension();
+	        int g1Dim = geometry.getCoordinateDimension();
+	        
+	        if(g0Dim == 3 && g1Dim == 3) {
+	                GeometryImpl geom = GeometryImpl.castToGeometryImpl(geometry);
+	                return Geometry3DOperation.distance(this, geom);
+	        }
+	        /* */
+	        
 		// first determine if this or the given geom is a multiprimitive, if so, break it
 		// down and loop through each of its geoms and determine the mindistance from
 		// those.
@@ -548,6 +559,12 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 	 * @see org.opengis.geometry.coordinate.root.Geometry#getConvexHull()
 	 */
 	public Geometry getConvexHull() {
+	        /* for 3D coordinate geometry */
+	        if(getCoordinateDimension() == 3) {
+	                return Geometry3DOperation.getConvexHull(this);
+	        }
+	        /* */
+	        
 		ConvexHull ch = new ConvexHull(this);
 		return ch.getConvexHull();		
 	}
@@ -574,6 +591,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 	public static boolean cRelate(Geometry g1, Geometry g2, String intersectionPatternMatrix) throws UnsupportedDimensionException {
 		GeometryImpl geom1 = GeometryImpl.castToGeometryImpl(g1);
 		GeometryImpl geom2 = GeometryImpl.castToGeometryImpl(g2);
+		
+		/* for 3D coordinate geometry */
+	        int d1 = geom1.getCoordinateDimension();
+	        int d2 = geom2.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.relate(geom1, geom2, intersectionPatternMatrix);
+	        }
+	        /* */
+	        
 		IntersectionMatrix tIM = RelateOp.relate((GeometryImpl) geom1, (GeometryImpl) geom2);
 		return tIM.matches(intersectionPatternMatrix);
 	}
@@ -592,6 +619,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 	public boolean relate(Geometry aOther, String intersectionPatternMatrix)
 			throws UnsupportedDimensionException {
 		GeometryImpl geom = GeometryImpl.castToGeometryImpl(aOther);
+		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = geom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.relate(this, geom, intersectionPatternMatrix);
+	        }
+	        /* */
+	        
 		IntersectionMatrix tIM = RelateOp.relate(this, geom);
 		return tIM.matches(intersectionPatternMatrix);
 	}
@@ -603,6 +640,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 	 */
 	public boolean contains(TransfiniteSet pointSet) {
 		GeometryImpl geom = GeometryImpl.castToGeometryImpl(pointSet);
+		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = geom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.contains(this, geom);
+	        }
+	        /* */
+	        
 		// a.Contains(b) = b.within(a)
 		return geom.within(this);
 	}
@@ -620,7 +667,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		// Return false, if the envelopes doesn´t intersect
 		if (!((EnvelopeImpl)this.getEnvelope()).intersects(geom.getEnvelope()))
 			return false;
-
+		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = geom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.within(this, geom);
+	        }
+	        /* */
+	        
 		IntersectionMatrix tIM = null;
 		try {
 			tIM = RelateOp.relate(this, geom);
@@ -699,6 +755,14 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		if (!((EnvelopeImpl)this.getEnvelope()).intersects(geom.getEnvelope()))
 			return true;
 		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = geom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.disjoint(this, geom);
+	        }
+	        /* */
 
 //		String intersectionPatternMatrix = "";
 //		if (this instanceof PrimitiveImpl) {
@@ -759,6 +823,15 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		if (!((EnvelopeImpl)this.getEnvelope()).intersects(geom.getEnvelope()))
 			return false;
 		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = geom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.equals(this, geom);
+	        }
+	        /* */
+		
 		IntersectionMatrix tIM = null;
 		try {
 			tIM = RelateOp.relate(this, geom);
@@ -818,6 +891,15 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		if (!((EnvelopeImpl)this.getEnvelope()).intersects(geom.getEnvelope()))
 			return false;
 
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = geom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.touches(this, geom);
+	        }
+	        /* */
+		
 		IntersectionMatrix tIM = null;
 		try {
 			tIM = RelateOp.relate(this, geom);
@@ -881,13 +963,22 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		int d1 = geom.getDimension(null);
 		int d2 = this.getDimension(null);
 
-		// Overlaps only for Point/Point, Curve/Curve, Surface/Surface
+		// Overlaps only for Point/Point, Curve/Curve, Surface/Surface, Solid/Solid
 		if (d1 != d2) {
 			return false;
 		}
 		// Return false, if the envelopes doesn´t intersect
 		if (!((EnvelopeImpl)this.getEnvelope()).intersects(geom.getEnvelope()))
 			return false;
+		
+		/* for 3D coordinate geometry */
+	        int coordD1 = getCoordinateDimension();
+	        int coordD2 = geom.getCoordinateDimension();
+	        
+	        if(coordD1 == 3 && coordD2 == 3) {
+	                return Geometry3DOperation.overlaps(this, geom);
+	        }
+	        /* */
 		
 		IntersectionMatrix tIM = null;
 		try {
@@ -950,14 +1041,23 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		int d1 = geom.getDimension(null);
 		int d2 = this.getDimension(null);
 
-		// Crosses only for Point/Curve, Curve/Curve, Point/Surface, Curve/Surface
-		if ((d1 == 2 && d2 == 2) || (d1 == 0) && (d2 == 0)) {
-			return false;
+		// Crosses only for Point/Curve, Curve/Curve, Point/Surface, Curve/Surface, Point/Solid, Curve/Solid, Surface/Solid
+		if ((d1 == 3 && d2 ==3) || (d1 == 2 && d2 == 2) || (d1 == 0) && (d2 == 0)) {
+		        return false;
 		}
 
 		// Return false, if the envelopes doesn´t intersect
 		if (!((EnvelopeImpl)this.getEnvelope()).intersects(geom.getEnvelope()))
 			return false;
+		
+		/* for 3D coordinate geometry */
+	        int coordD1 = getCoordinateDimension();
+	        int coordD2 = geom.getCoordinateDimension();
+	        
+	        if(coordD1 == 3 && coordD2 == 3) {
+	                return Geometry3DOperation.crosses(this, geom);
+	        }
+	        /* */
 		
 		IntersectionMatrix tIM = null;
 		try {
@@ -1030,6 +1130,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 	 */
 	public TransfiniteSet union(TransfiniteSet pointSet) {
 		GeometryImpl otherGeom = GeometryImpl.castToGeometryImpl(pointSet);
+		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = otherGeom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.union(this, otherGeom);
+	        }
+	        /* */
+		
 		// Return the result geometry of the Union operation between the input
 		// geometries
 		try {
@@ -1049,6 +1159,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		// Return the result geometry of the Intersection operation between the
 		// input geometries
 		GeometryImpl otherGeom = GeometryImpl.castToGeometryImpl(pointSet);
+		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = otherGeom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.intersection(this, otherGeom);
+	        }
+	        /* */
+		
 		try {
 			return OverlayOp.overlayOp(this, otherGeom, OverlayOp.INTERSECTION);
 		} catch (UnsupportedDimensionException e) {
@@ -1066,6 +1186,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		// Return the result geometry of the Difference operation between the
 		// input geometries
 		GeometryImpl otherGeom = GeometryImpl.castToGeometryImpl(pointSet);
+		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = otherGeom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.difference(this, otherGeom);
+	        }
+	        /* */
+		
 		try {
 			return OverlayOp.overlayOp(this, otherGeom, OverlayOp.DIFFERENCE);
 		} catch (UnsupportedDimensionException e) {
@@ -1083,6 +1213,16 @@ public abstract class GeometryImpl implements Geometry, Serializable  {
 		// Return the result geometry of the Symmetric Difference operation
 		// between the input geometries
 		GeometryImpl otherGeom = GeometryImpl.castToGeometryImpl(pointSet);
+		
+		/* for 3D coordinate geometry */
+	        int d1 = getCoordinateDimension();
+	        int d2 = otherGeom.getCoordinateDimension();
+	        
+	        if(d1 == 3 && d2 == 3) {
+	                return Geometry3DOperation.symmetricDifference(this, otherGeom);
+	        }
+	        /* */
+		
 		try {
 			return OverlayOp
 					.overlayOp(this, otherGeom, OverlayOp.SYMDIFFERENCE);

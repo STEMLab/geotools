@@ -24,12 +24,17 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.geotools.factory.Hints;
 import org.geotools.geometry.iso.PositionFactoryImpl;
 import org.geotools.geometry.iso.coordinate.LineStringImpl;
 import org.geotools.geometry.iso.coordinate.PointArrayImpl;
 import org.geotools.geometry.iso.primitive.CurveImpl;
 import org.geotools.geometry.iso.primitive.PointImpl;
+import org.geotools.geometry.iso.primitive.PrimitiveFactoryImpl;
 import org.geotools.geometry.iso.primitive.RingImpl;
+import org.geotools.geometry.iso.primitive.ShellImpl;
+import org.geotools.geometry.iso.primitive.SolidBoundaryImpl;
+import org.geotools.geometry.iso.primitive.SolidImpl;
 import org.geotools.geometry.iso.primitive.SurfaceBoundaryImpl;
 import org.geotools.geometry.iso.primitive.SurfaceImpl;
 import org.geotools.geometry.iso.util.AssertionFailedException;
@@ -40,8 +45,12 @@ import org.opengis.geometry.coordinate.Position;
 import org.opengis.geometry.primitive.Curve;
 import org.opengis.geometry.primitive.CurveSegment;
 import org.opengis.geometry.primitive.OrientableCurve;
+import org.opengis.geometry.primitive.OrientableSurface;
 import org.opengis.geometry.primitive.Point;
 import org.opengis.geometry.primitive.Ring;
+import org.opengis.geometry.primitive.Shell;
+import org.opengis.geometry.primitive.Solid;
+import org.opengis.geometry.primitive.SolidBoundary;
 import org.opengis.geometry.primitive.Surface;
 import org.opengis.geometry.primitive.SurfaceBoundary;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -66,7 +75,7 @@ public class WKTReader {
 
 	private static final String R_PAREN = ")";
 
-	//private PrimitiveFactoryImpl primitiveFactory;
+	private PrimitiveFactoryImpl primitiveFactory;
 	//private GeometryFactoryImpl geometryFactory;
     private PositionFactory positionFactory;
     private CoordinateReferenceSystem crs;
@@ -86,6 +95,12 @@ public class WKTReader {
 			PositionFactory aPositionFactory ) {
 		this.crs = crs;
         this.positionFactory = aPositionFactory;
+	}
+	
+	public WKTReader(Hints hints) {
+	        this.crs = (CoordinateReferenceSystem) hints.get(Hints.CRS);
+	        this.positionFactory = new PositionFactoryImpl(hints);
+	        this.primitiveFactory = new PrimitiveFactoryImpl(hints);
 	}
 
 	/**
@@ -378,6 +393,8 @@ public class WKTReader {
 		} else if ( type.equalsIgnoreCase(WKTConstants.WKT_SURFACE) ||
 				type.equalsIgnoreCase(WKTConstants.WKT_POLYGON) ) {
 			return readPolygonText();
+		} else if ( type.equalsIgnoreCase(WKTConstants.WKT_SOLID)) {
+		        return readSolidText();
 		}
 		throw new ParseException("Unknown geometry type: " + type);
 	}
@@ -439,6 +456,9 @@ public class WKTReader {
 	private Ring readLinearRingText() throws IOException, ParseException {
 		List<OrientableCurve> curves = new ArrayList<OrientableCurve>();
 		curves.add(this.createCurve(this.getCoordinates()));
+		if(this.primitiveFactory != null) {
+		        return this.primitiveFactory.createRing(curves);
+		}
 		return new RingImpl(curves); //this.primitiveFactory.createRing(curves);
 
 	}
@@ -499,5 +519,75 @@ public class WKTReader {
 		segments.add(lineString);
 		return new CurveImpl(crs, segments); //this.primitiveFactory.createCurve(segments);
 	}
+	
+	/**
+         * Creates a <code>Shell</code> using the next token in the stream.
+         * 
+         * @param tokenizer
+         *            tokenizer over a stream of text in Well-known Text format. The
+         *            next tokens must form a &lt;Shell Text&gt;.
+         * @return a <code>Shell</code> specified by the next token in the
+         *         stream
+         * @throws IOException
+         *             if an I/O error occurs
+         * @throws ParseException
+         *             if the coordinates used to create the <code>Shell</code>
+         *             do not form a closed surfaces, or if an unexpected token
+         *             was encountered
+         */
+	private Shell readShellText() throws IOException, ParseException {
+	        
+	        String nextToken = getNextEmptyOrOpener();
+	        
+	        if(nextToken.equals(EMPTY)) {
+                        return new ShellImpl(null);
+                }
+	        
+	        ArrayList<OrientableSurface> surfaces = new ArrayList<OrientableSurface>();
+	        surfaces.add(this.readPolygonText());
+	        nextToken = getNextCloserOrComma();
+                while (nextToken.equals(COMMA)) {
+                        Surface surface = readPolygonText();
+                        surfaces.add(surface);
+                        nextToken = getNextCloserOrComma();
+                }
+                Shell shell = new ShellImpl(crs, surfaces);
+                return shell;
+	}
 
+	/**
+         * Creates a <code>Solid</code> using the next token in the stream.
+         * 
+         * @param tokenizer
+         *            tokenizer over a stream of text in Well-known Text format. The
+         *            next tokens must form a &lt;Solid Text&gt;.
+         * @return a <code>Polygon</code> specified by the next token in the
+         *         stream
+         * @throws ParseException
+         *             if the coordinates used to create the <code>Solid</code>
+         *             shell and holes do not form closed surfaces, or if an
+         *             unexpected token was encountered.
+         * @throws IOException
+         *             if an I/O error occurs
+         */
+	private Solid readSolidText() throws IOException, ParseException {
+	        
+	        String nextToken = getNextEmptyOrOpener();
+	        
+	        if(nextToken.equals(EMPTY)) {
+	                return new SolidImpl((SolidBoundary) null);
+	        }
+	        
+	        ArrayList<Shell> interiors = new ArrayList<Shell>();
+	        Shell exterior = this.readShellText();
+	        nextToken = getNextCloserOrComma();
+                while (nextToken.equals(COMMA)) {
+                        Shell interior = readShellText();
+                        interiors.add(interior);
+                        nextToken = getNextCloserOrComma();
+                }
+                SolidBoundary sb = new SolidBoundaryImpl(crs, exterior, interiors);
+	        return new SolidImpl(sb);
+	}
+	
 }
