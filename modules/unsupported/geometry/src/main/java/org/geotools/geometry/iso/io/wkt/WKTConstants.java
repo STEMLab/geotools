@@ -37,4 +37,6 @@ public class WKTConstants {
 	
 	public static String WKT_POLYGON = "POLYGON";
 
+	public static String WKT_SOLID = "SOLID";
+	
 }

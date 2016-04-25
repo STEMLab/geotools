@@ -140,5 +140,12 @@ public class AggregateFactoryImpl implements Factory, AggregateFactory {
 		return new MultiSurfaceImpl(crs, surfaces);
 	}
 
-	
+	/**
+         * Creates a MultiSolid by a set of Solids.
+         * @param primitives Set of Primitives which shall be contained by the MultiSolid
+         * @return
+         */
+        public MultiPrimitive createMultiSolid(Set<Primitive> primitives) {
+                return new MultiSolidImpl(crs, primitives);
+        }
 }
