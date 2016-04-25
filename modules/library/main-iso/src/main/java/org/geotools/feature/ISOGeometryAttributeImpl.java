@@ -35,13 +35,11 @@ public class ISOGeometryAttributeImpl extends AttributeImpl implements GeometryA
     
     protected BoundingBox bounds;
     
-    protected Geometry isoGeometry;
-    
     public ISOGeometryAttributeImpl(Object content, GeometryDescriptor descriptor, Identifier id) {
         super(content, descriptor, id);
     }
 
-    @Override
+    @Override 
     public GeometryType getType() {
         return (GeometryType) super.getType();
     }
