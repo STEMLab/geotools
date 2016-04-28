@@ -21,6 +21,7 @@ import java.util.List;
 import javax.xml.namespace.QName;
 
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.data.complex.config.ComplexFeatureTypeRegistry;
 import org.geotools.gml2.FeatureTypeCache;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.XSDIdRegistry;
@@ -76,7 +77,7 @@ import org.w3c.dom.Element;
 public class ComplexFeatureTypeBinding extends AbstractComplexBinding {
 
     private FeatureTypeCache ftCache;
-    private FeatureCache fCache;
+    private ComplexFeatureTypeRegistry registry;
     
     XSDIdRegistry idSet;
     BindingWalkerFactory bwFactory;
@@ -84,13 +85,11 @@ public class ComplexFeatureTypeBinding extends AbstractComplexBinding {
     Configuration configuration;
     GML3EncodingUtils encodingUtils;
     
-    public ComplexFeatureTypeBinding(FeatureTypeCache ftCache, FeatureCache fCache, BindingWalkerFactory bwFactory,
+    public ComplexFeatureTypeBinding(FeatureTypeCache ftCache, FeatureCache fCache, ComplexFeatureTypeRegistry registry,
             SchemaIndex schemaIndex, Configuration configuration, XSDIdRegistry idRegistry) {
         
         this.ftCache = ftCache;
-        this.fCache = fCache;
-        
-        this.bwFactory = bwFactory;
+        this.registry = registry;
         this.schemaIndex = schemaIndex;
         this.configuration = configuration;
         this.idSet = idRegistry;
@@ -125,7 +124,7 @@ public class ComplexFeatureTypeBinding extends AbstractComplexBinding {
             System.out.println(instance);
         
         
-            return GMLComplexParsingUtils.parseFeature(instance, node, value, ftCache, bwFactory);
+            return GMLComplexParsingUtils.parseFeature(instance, node, value, ftCache, registry);
     }
 
     public Element encode(Object object, Document document, Element value)

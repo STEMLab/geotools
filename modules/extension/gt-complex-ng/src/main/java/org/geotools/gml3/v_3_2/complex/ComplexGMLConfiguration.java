@@ -3,6 +3,7 @@
  */
 package org.geotools.gml3.v_3_2.complex;
 
+import org.geotools.data.complex.config.ComplexFeatureTypeRegistry;
 import org.geotools.gml2.SrsSyntax;
 import org.geotools.gml2.bindings.GMLCoordinatesTypeBinding;
 import org.geotools.gml3.bindings.AbstractFeatureCollectionTypeBinding;
@@ -123,6 +124,11 @@ public class ComplexGMLConfiguration extends Configuration {
      */
     public SrsSyntax getSrsSyntax() {
         return delegate.getSrsSyntax();
+    }
+    
+    private ComplexFeatureTypeRegistry registry;
+    public void setFeatureTypeRegistry(ComplexFeatureTypeRegistry registry) {
+        this.registry = registry;
     }
     
     protected void registerBindings(MutablePicoContainer container) {
@@ -271,6 +277,8 @@ public class ComplexGMLConfiguration extends Configuration {
         container.unregisterComponent(GML3EncodingUtils.class);
         container.registerComponentInstance(new GML32EncodingUtils());
         container.registerComponentInstance(new FeatureCache());
+        
+        container.registerComponentInstance(registry);
     }
 
     /**
