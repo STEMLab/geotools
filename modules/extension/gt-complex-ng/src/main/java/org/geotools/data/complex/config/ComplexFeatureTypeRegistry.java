@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2009-2011, Open Source Geospatial Foundation (OSGeo)
+ *    (C) 2009-2016, Open Source Geospatial Foundation (OSGeo)
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -72,7 +72,7 @@ import com.vividsolutions.jts.geom.Geometry;
  * 
  * @author Gabriel Roldan
  * @author Niels Charlier
- * 
+ * @author Hyung-Gyu Ryoo (Pusan National University)
  * 
  * 
  */
@@ -138,6 +138,12 @@ public class ComplexFeatureTypeRegistry {
         }
     }
 
+    /**
+     * @deprecated
+     * @param descriptorName
+     * @param crs
+     * @return
+     */
     public AttributeDescriptor getDescriptor(final Name descriptorName,
             CoordinateReferenceSystem crs) {
         AttributeDescriptor descriptor = descriptorRegistry.get(descriptorName);
@@ -153,6 +159,13 @@ public class ComplexFeatureTypeRegistry {
         return descriptor;
     }
     
+    /**
+     * NOTE : This method is called from Binding class
+     * @param descriptorName
+     * @param crs
+     * @param elemDecl
+     * @return
+     */
     public AttributeDescriptor getDescriptor(final Name descriptorName,
             CoordinateReferenceSystem crs, XSDElementDeclaration elemDecl) {
         AttributeDescriptor descriptor = descriptorRegistry.get(descriptorName);
@@ -504,9 +517,8 @@ public class ComplexFeatureTypeRegistry {
         processingTypes.push(assignedName);
         // //////////
 
+        //traverse superType
         final XSDTypeDefinition baseType = typeDefinition.getBaseType();
-        
-        System.out.println("super type of " + assignedName);
         AttributeType superType = null;
         if (baseType != null) {
             String targetNamespace = baseType.getTargetNamespace();
@@ -572,6 +584,9 @@ public class ComplexFeatureTypeRegistry {
                 setSubstitutionGroup(complexTypeDef, elemDecl, att, crs);
             }
             attType = createComplexAttributeType(assignedName, schema, complexTypeDef, superType);
+            
+            
+            
         } else {
             Class<?> binding = String.class;
             boolean isIdentifiable = false;
