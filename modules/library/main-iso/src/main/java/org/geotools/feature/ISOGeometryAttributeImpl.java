@@ -22,9 +22,10 @@ import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.GeometryType;
 import org.opengis.filter.identity.Identifier;
 import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.Geometry;
 import org.opengis.geometry.primitive.Solid;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
+import com.vividsolutions.jts.geom.Geometry;
 
 /**
  * The GeometryAttribute Implementation providing geometry model based on ISO19107 specification.
