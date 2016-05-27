@@ -773,7 +773,7 @@ public final class JDBCDataStore extends ContentDataStore
             LOGGER.log(Level.FINE, "Create schema: {0}", sql);
 
             Statement st = cx.createStatement();
-
+            System.out.println(sql);
             try {
                 st.execute(sql);
             } finally {
@@ -2237,7 +2237,7 @@ public final class JDBCDataStore extends ContentDataStore
             //can be null?
             nillable[i] = attributeType.getMinOccurs() <= 0 || attributeType.isNillable();
         }
-
+        System.out.println(columnNames);
         sqlTypeNames = getSQLTypeNames(classes, cx);
         for ( int i = 0; i < sqlTypeNames.length; i++ ) {
             if ( sqlTypeNames[i] == null ) {
@@ -3026,7 +3026,7 @@ public final class JDBCDataStore extends ContentDataStore
         //build the create table sql
         StringBuffer sql = new StringBuffer();
         dialect.encodeCreateTable(sql);
-
+        
         encodeTableName(tableName, sql, null);
         sql.append(" ( ");
 

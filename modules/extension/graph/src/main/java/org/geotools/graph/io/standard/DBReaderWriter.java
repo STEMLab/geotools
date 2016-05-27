@@ -133,6 +133,7 @@ public abstract class DBReaderWriter extends AbstractReaderWriter {
       }
     }
     
+    
     //close database connection
     st.close();
     conn.close();
