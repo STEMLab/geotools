@@ -12,13 +12,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationFactory;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.OperationNotFoundException;
-import org.opengis.referencing.operation.TransformException;
+//geotools dependencies
+import org.geotools.factory.BasicFactories;
+import org.geotools.geometry.jts.JTSGeometry;
+import org.geotools.geometry.jts.JTSUtils;
+import org.geotools.geometry.jts.spatialschema.geometry.primitive.CurveBoundaryImpl;
+import org.geotools.geometry.jts.spatialschema.geometry.primitive.PointImpl;
+import org.geotools.geometry.jts.spatialschema.geometry.primitive.SurfaceBoundaryImpl;
 import org.opengis.geometry.Boundary;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.Envelope;
@@ -28,16 +28,17 @@ import org.opengis.geometry.Precision;
 import org.opengis.geometry.TransfiniteSet;
 import org.opengis.geometry.complex.Complex;
 import org.opengis.geometry.primitive.Ring;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.CoordinateOperation;
+import org.opengis.referencing.operation.CoordinateOperationFactory;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.OperationNotFoundException;
+import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.Cloneable;
 
-import org.geotools.geometry.jts.spatialschema.geometry.primitive.CurveBoundaryImpl;
-import org.geotools.geometry.jts.spatialschema.geometry.primitive.PointImpl;
-import org.geotools.geometry.jts.spatialschema.geometry.primitive.SurfaceBoundaryImpl;
-import org.geotools.geometry.jts.JTSGeometry;
-import org.geotools.geometry.jts.JTSUtils;
-
-//geotools dependencies
-import org.geotools.factory.BasicFactories;
+import com.vividsolutions.jts.geom.CoordinateSequence;
+import com.vividsolutions.jts.geom.LineString;
 
 /**
  * Base class for our JTS-based implementation of the various ISO 19107 geometry
@@ -256,8 +257,19 @@ public abstract class GeometryImpl
             // If d == 2, then the boundary is a collection of rings.
             // In particular, the JTS tests indicate that it'll be a
             // MultiLineString.
-            com.vividsolutions.jts.geom.MultiLineString mls =
-                (com.vividsolutions.jts.geom.MultiLineString) jtsBoundary;
+            
+            // Donguk Seo
+            // Original code didn't consider when the jtsBoundary is LineString.
+            // If the jtsBoundary is LineString, create a MultiLineString with the jtsBoundary.
+            com.vividsolutions.jts.geom.MultiLineString mls = null;
+            if (jtsBoundary instanceof com.vividsolutions.jts.geom.MultiLineString) {
+                mls = (com.vividsolutions.jts.geom.MultiLineString) jtsBoundary;
+            } else if (jtsBoundary instanceof com.vividsolutions.jts.geom.LineString) {
+                mls = new com.vividsolutions.jts.geom.MultiLineString(
+                        new com.vividsolutions.jts.geom.LineString[]{
+                                (com.vividsolutions.jts.geom.LineString) jtsBoundary },
+                                jtsBoundary.getFactory());
+            }
             int n = mls.getNumGeometries();
             CoordinateReferenceSystem crs = getCoordinateReferenceSystem();
             Ring exteriorRing = JTSUtils.linearRingToRing(
@@ -265,7 +277,7 @@ public abstract class GeometryImpl
                 crs);
             Ring [] interiorRings = new Ring[n-1];
             for (int i=1; i<n; i++) {
-                interiorRings[n-1] = JTSUtils.linearRingToRing(
+                interiorRings[i-1] = JTSUtils.linearRingToRing(
                     (com.vividsolutions.jts.geom.LineString)
                     	mls.getGeometryN(i),
                     crs);
@@ -428,13 +440,98 @@ public abstract class GeometryImpl
         com.vividsolutions.jts.geom.Geometry jtsGeom = getJTSGeometry();
         com.vividsolutions.jts.geom.Envelope jtsEnv = jtsGeom.getEnvelopeInternal();
         CoordinateReferenceSystem crs = getCoordinateReferenceSystem();
-        Envelope result = new EnvelopeImpl(
-                new DirectPositionImpl(crs,
-                        new double [] { jtsEnv.getMinX(), jtsEnv.getMinY() }),
-                new DirectPositionImpl(crs,
-                        new double [] { jtsEnv.getMaxX(), jtsEnv.getMaxY() })
-        );
+        
+        /*
+         * donguk seo
+         * Original code didn't consider the case of 3-dimension envelope.
+         * Because the Envelope of JTSGeometry has only 4 coordinates(min,max-xy).
+         */
+        Envelope result = null;
+        if (crs.getCoordinateSystem().getDimension() == 2) {
+            result = new EnvelopeImpl(
+                    new DirectPositionImpl(crs,
+                            new double [] { jtsEnv.getMinX(), jtsEnv.getMinY() }),
+                    new DirectPositionImpl(crs,
+                            new double [] { jtsEnv.getMaxX(), jtsEnv.getMaxY() })
+            );
+        } else if (crs.getCoordinateSystem().getDimension() == 3) {
+            result = new EnvelopeImpl(
+                    new DirectPositionImpl(crs,
+                            new double [] { jtsEnv.getMinX(), jtsEnv.getMinY(), Double.NaN }),
+                    new DirectPositionImpl(crs,
+                            new double [] { jtsEnv.getMaxX(), jtsEnv.getMaxY(), Double.NaN })
+            );
+            result = expandEnvelopeWithZ(jtsGeom, result);
+        }
         return result;
+    }
+    
+    /**
+     * Expands a envelope with a 3-dimension geometry
+     */
+    public Envelope expandEnvelopeWithZ(com.vividsolutions.jts.geom.Geometry jtsGeom, Envelope envelope) {
+        if (jtsGeom instanceof com.vividsolutions.jts.geom.Point) {
+            envelope = expandEnvelopeWithZ((com.vividsolutions.jts.geom.Point) jtsGeom, envelope);
+        } else if (jtsGeom instanceof com.vividsolutions.jts.geom.LineString) {
+            envelope = expandEnvelopeWithZ((com.vividsolutions.jts.geom.LineString) jtsGeom, envelope);
+        } else if (jtsGeom instanceof com.vividsolutions.jts.geom.Polygon) {
+            envelope = expandEnvelopeWithZ((com.vividsolutions.jts.geom.Polygon) jtsGeom, envelope);
+        } else if (jtsGeom instanceof com.vividsolutions.jts.geom.GeometryCollection) {
+            envelope = expandEnvelopeWithZ((com.vividsolutions.jts.geom.GeometryCollection) jtsGeom, envelope);
+        }
+        
+        return envelope;
+    }    
+    
+    public Envelope expandEnvelopeWithZ(com.vividsolutions.jts.geom.Coordinate coord, Envelope envelope) {
+        DirectPosition lowerCorner = envelope.getLowerCorner();
+        DirectPosition upperCorner = envelope.getUpperCorner();
+        double z = coord.z;
+        
+        if (Double.isNaN(lowerCorner.getOrdinate(2)) && Double.isNaN(upperCorner.getOrdinate(2))) {
+            lowerCorner.setOrdinate(2, z);
+            upperCorner.setOrdinate(2, z);
+            
+            envelope = new EnvelopeImpl(lowerCorner, upperCorner);
+        } else {
+            if (z < lowerCorner.getOrdinate(2)) {
+               lowerCorner.setOrdinate(2, z);               
+               envelope = new EnvelopeImpl(lowerCorner, upperCorner);
+            }
+            if (z > upperCorner.getOrdinate(2)) {
+               upperCorner.setOrdinate(2, z);                
+               envelope = new EnvelopeImpl(lowerCorner, upperCorner);
+            }
+        }        
+        
+        return envelope;
+    }
+    
+    public Envelope expandEnvelopeWithZ(com.vividsolutions.jts.geom.Point jtsPoint, Envelope envelope) {        
+        return expandEnvelopeWithZ(jtsPoint.getCoordinate(), envelope);
+    }
+    
+    public Envelope expandEnvelopeWithZ(com.vividsolutions.jts.geom.LineString jtsLineString, Envelope envelope) {
+        CoordinateSequence points = jtsLineString.getCoordinateSequence();
+        
+        for(int i = 0; i < points.size(); i++) {
+            envelope = expandEnvelopeWithZ(points.getCoordinate(i), envelope);
+        }
+        
+        return envelope;
+    }
+    
+    public Envelope expandEnvelopeWithZ(com.vividsolutions.jts.geom.Polygon jtsPolygon, Envelope envelope) {        
+        return expandEnvelopeWithZ(jtsPolygon.getExteriorRing(), envelope);
+    }
+    
+    public Envelope expandEnvelopeWithZ(com.vividsolutions.jts.geom.GeometryCollection jtsGeomCollection,
+            Envelope envelope) {
+        for(int i = 0; i < jtsGeomCollection.getNumGeometries(); i++) {
+            envelope = expandEnvelopeWithZ(jtsGeomCollection.getGeometryN(i), envelope);
+        }
+        
+        return envelope;
     }
 
     /**

@@ -16,6 +16,7 @@
  */
 package org.geotools.geometry.iso.primitive;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -81,8 +82,17 @@ public class SolidBoundaryImpl extends PrimitiveBoundaryImpl implements
 
 	@Override
 	public SolidBoundaryImpl clone() throws CloneNotSupportedException {
-		// TODO Auto-generated method stub
-		return null;
+	        Shell newExterior = (Shell) this.getExterior().clone();
+	        List<Shell> newInteriors = null;
+	        Shell[] interiors = this.getInteriors();
+	        if(interiors != null) {
+	                newInteriors = new ArrayList<Shell>();
+	                for (int i = 0; i < interiors.length; i++) {
+	                        newInteriors.add((Shell) interiors[i].clone());
+	                }
+	        }
+	        
+	        return new SolidBoundaryImpl(getCoordinateReferenceSystem(), newExterior, newInteriors); 
 	}
 
 	/**

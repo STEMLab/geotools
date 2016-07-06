@@ -19,6 +19,9 @@ package org.geotools.geometry.iso.primitive;
 import org.geotools.geometry.iso.coordinate.DirectPositionImpl;
 import org.geotools.geometry.iso.coordinate.EnvelopeImpl;
 import org.geotools.geometry.iso.io.GeometryToString;
+import org.geotools.geometry.iso.sfcgal.util.SFCGALConvertor;
+import org.geotools.geometry.iso.sfcgal.wrapper.SFAlgorithm;
+import org.geotools.geometry.iso.sfcgal.wrapper.SFPolyhedralSurface;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.Envelope;
 import org.opengis.geometry.primitive.OrientablePrimitive;
@@ -73,7 +76,9 @@ public class SolidImpl extends PrimitiveImpl implements Solid {
 	 * @return Area
 	 */
 	public double area() {
-		return 0.0;
+		SFPolyhedralSurface polyhedral = SFCGALConvertor.shellToSFCGALPolyhedralSurface(this.boundary.getExterior());
+		
+		return SFAlgorithm.area3D(polyhedral);
 	}
 
 	/**
@@ -86,7 +91,7 @@ public class SolidImpl extends PrimitiveImpl implements Solid {
 	 * @return Volume
 	 */
 	public double volume() {
-		return 0.0;
+		return SFAlgorithm.volume(SFCGALConvertor.solidToSFCGALSolid(this));
 	}
 
 	/**
@@ -145,8 +150,9 @@ public class SolidImpl extends PrimitiveImpl implements Solid {
 
 	@Override
 	public SolidImpl clone() throws CloneNotSupportedException {
-		// TODO Auto-generated method stub
-		return null;
+		SolidBoundary newBoundary = (SolidBoundary) this.boundary.clone();
+		
+		return new SolidImpl(newBoundary);
 	}
 
 	public OrientablePrimitive[] getProxy() {
@@ -156,17 +162,17 @@ public class SolidImpl extends PrimitiveImpl implements Solid {
 
 	public boolean isSimple() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	public double getArea() {
 		// TODO Auto-generated method stub
-		return 0;
+		return area();
 	}
 
 	public double getVolume() {
 		// TODO Auto-generated method stub
-		return 0;
+		return volume();
 	}
 
 

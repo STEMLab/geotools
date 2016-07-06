@@ -19,6 +19,7 @@ package org.geotools.geometry.iso.sfcgal.util;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -189,7 +190,7 @@ public class SFCGALConvertor {
          */
         public static SFLineString curveToSFCGALLineString(Curve curve) {
 
-                return lineStringToSFCGALLineString(((CurveImpl) curve).asLineString());
+                return lineStringToSFCGALLineString(curve.asLineString(0.0, 0.0));
         }
 
         /**
@@ -199,16 +200,38 @@ public class SFCGALConvertor {
          */
         public static SFLineString ringToSFCGALLineString(Ring ring) {
                 SFLineString lineString = null;
-                List<DirectPosition> directPositions = ((RingImplUnsafe) ring).asDirectPositions();
+                
+                List<OrientableCurve> generators = ring.getGenerators();
+                Iterator elementIter = generators.iterator();
 
-                ArrayList<SFPoint> points = new ArrayList<SFPoint>();
-                Iterator iter = directPositions.iterator();
-                while (iter.hasNext()) {
-                        points.add(directPositionToSFCGALPoint((DirectPosition) iter.next()));
+                Curve element = (Curve) elementIter.next();
+                LineString result = element.asLineString(0.0, 0.0);
+                PointArray resultPoints = result.getControlPoints();
+                while (elementIter.hasNext()) {
+                    element = (Curve) elementIter.next();
+                    LineString nextLine = element.asLineString(0.0, 0.0);
+                    
+                    if (nextLine.getEndPoint().equals(result.getStartPoint())) {
+                        LinkedList<Position> posToAdd = new LinkedList<Position>(nextLine.getControlPoints());
+                        posToAdd.removeLast();
+                        resultPoints.addAll(0, posToAdd);
+                    } else if (result.getEndPoint().equals(nextLine.getStartPoint())) {
+                        LinkedList<Position> posToAdd = new LinkedList<Position>(nextLine.getControlPoints());
+                        posToAdd.removeFirst();
+                        resultPoints.addAll(posToAdd);
+                    } else {
+                        throw new IllegalArgumentException("The LineString do not agree in a start and end point");
+                    }
                 }
-
+                
+                ArrayList<SFPoint> points = new ArrayList<SFPoint>();
+                Iterator iter = resultPoints.iterator();
+                while (iter.hasNext()) {
+                    Position position = (Position) iter.next();
+                    points.add(directPositionToSFCGALPoint(position.getDirectPosition()));
+                }
                 lineString = new SFLineString(points);
-
+                
                 return lineString;
         }
 

@@ -75,6 +75,31 @@
       </roles>
     </developer>
   </developers>
+  
+  <profiles>
+  	<profile>
+  		<id>windows</id>
+  		<activation>
+  			<os>
+  				<family>windows</family>
+  			</os>
+  		</activation>
+  		<properties>
+  			<script.extension>_windows.bat</script.extension>
+  		</properties>
+  	</profile>
+  	<profile>
+  		<id>linux</id>
+  		<activation>
+  			<os>
+  				<family>linux</family>
+  			</os>
+  		</activation>
+  		<properties>
+  			<script.extension>_linux.sh</script.extension>
+  		</properties>
+  	</profile>
+  </profiles>
 
 
   <!-- ======================================================= -->
@@ -94,7 +119,7 @@
 	              <goal>exec</goal>
 	            </goals>
 	            <configuration>
-	              <executable>${basedir}/lib/build_linux.sh</executable>	              
+	              <executable>${basedir}/lib/build${script.extension}</executable>	              
 	            </configuration>
 	          </execution>
 	      </executions>
@@ -104,12 +129,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <skipTests>true</skipTests>
-          <!-- 
+          <!-- <skipTests>true</skipTests> -->
           <excludes>
             <exclude>**/RunStoredTest.java</exclude>
           </excludes>
-          -->
+          <testFailureIgnore>${allow.test.failure.ignore}</testFailureIgnore>
         </configuration>
       </plugin>
     </plugins>
