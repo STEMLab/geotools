@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2007-2015, Open Source Geospatial Foundation (OSGeo)
+ *    (C) 2007 - 2016, Open Source Geospatial Foundation (OSGeo)
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@ package org.geotools.gce.imagemosaic.catalog;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.logging.Logger;
 import javax.imageio.spi.ImageReaderSpi;
 
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.coverage.grid.io.footprint.MultiLevelROI;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataUtilities;
@@ -60,7 +62,6 @@ import org.geotools.util.Utilities;
 import org.opengis.feature.Feature;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.identity.FeatureId;
@@ -106,11 +107,17 @@ class GTDataStoreGranuleCatalog extends GranuleCatalog {
 
     boolean wrapstore = false;
 
+    private Properties params;
+
+    private DataStoreFactorySpi spi;
+
     public GTDataStoreGranuleCatalog(final Properties params, final boolean create,
             final DataStoreFactorySpi spi, final Hints hints) {
         super(hints);
         Utilities.ensureNonNull("params", params);
         Utilities.ensureNonNull("spi", spi);
+        this.spi=spi;
+        this.params=params;
 
         try {
             this.pathType = (PathType) params.get(Utils.Prop.PATH_TYPE);
@@ -179,9 +186,7 @@ class GTDataStoreGranuleCatalog extends GranuleCatalog {
                 String[] typeNames = tileIndexStore.getTypeNames();
                 if (typeNames != null) {
                     for (String tn : typeNames) {
-                        if (isValidMosaicSchema(tn)) {
-                            this.typeNames.add(tn);
-                        }
+                        this.typeNames.add(tn);
                     }
                 }
             } else if (typeName != null) {
@@ -208,7 +213,13 @@ class GTDataStoreGranuleCatalog extends GranuleCatalog {
             }
 
             if (this.typeNames.size() > 0) {
-                extractBasicProperties(typeNames.iterator().next());
+                // pick the first valid schema found
+                for (String tn : typeNames) {
+                    if(isValidMosaicSchema(tn)) {
+                        extractBasicProperties(tn);
+                        break;
+                    }
+                }
             } else if (typeName != null && typeName.contains(",")) {
                 String[] typeNames = typeName.split(",");
                 for (String tn : typeNames) {
@@ -243,24 +254,7 @@ class GTDataStoreGranuleCatalog extends GranuleCatalog {
     private boolean isValidMosaicSchema(String typeName) throws IOException {
         SimpleFeatureType schema = tileIndexStore.getSchema(typeName);
 
-        return isValidMosaicSchema(schema);
-    }
-
-    /**
-     * Returns true if the type is usable as a mosaic index, that is, it has a geometry and the
-     * expected location property
-     */
-    private boolean isValidMosaicSchema(SimpleFeatureType schema) {
-        // does it have a geometry?
-        if (schema.getGeometryDescriptor() == null) {
-            return false;
-        }
-
-        // does it have the location property
-        String locationName = getLocationAttributeName();
-        AttributeDescriptor location = schema.getDescriptor(locationName);
-        return location != null
-                && CharSequence.class.isAssignableFrom(location.getType().getBinding());
+        return Utils.isValidMosaicSchema(schema, getLocationAttributeName());
     }
 
     private String getLocationAttributeName() {
@@ -292,7 +286,7 @@ class GTDataStoreGranuleCatalog extends GranuleCatalog {
      * @param schema
      */
     private void checkMosaicSchema(SimpleFeatureType schema) {
-        if(!isValidMosaicSchema(schema)) {
+        if(!Utils.isValidMosaicSchema(schema, getLocationAttributeName())) {
             throw new IllegalArgumentException("Invalid mosaic schema " + schema + ", "
                     + "it should have a geometry and a location property of name " + locationAttribute);
         }
@@ -787,6 +781,34 @@ class GTDataStoreGranuleCatalog extends GranuleCatalog {
         } finally {
             lock.unlock();
 
+        }
+    }
+
+    @Override
+    public void drop() throws IOException {
+
+        // drop a datastore. Right now, only postGIS drop is supported
+
+        final Map<?, ?> params = Utils.filterDataStoreParams(this.params, spi);
+        // Use reflection to invoke dropDatabase on postGis factory DB 
+        
+        final Method[] methods = spi.getClass().getMethods();
+        boolean dropped=false;
+        for(Method method: methods){
+            if(method.getName().equalsIgnoreCase("dropDatabase")){
+                try{
+                    method.invoke(spi, params);
+                } catch (Exception e) {
+                    throw new IOException("Unable to drop the database: ", e);
+                }                         
+                dropped=true;
+                break;
+            }
+        }
+        if(!dropped){
+            if(LOGGER.isLoggable(Level.WARNING)){
+                LOGGER.log(Level.WARNING,"Unable to drop catalog for SPI "+spi.getDisplayName());
+            }
         }
     }
 }

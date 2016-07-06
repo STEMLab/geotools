@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2002-2008, Open Source Geospatial Foundation (OSGeo)
+ *    (C) 2002-2016, Open Source Geospatial Foundation (OSGeo)
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -633,7 +633,7 @@ public final class WorldImageReader extends AbstractGridCoverage2DReader
         }
         if (crs == null) {
             crs = AbstractGridFormat.getDefaultCRS();
-            LOGGER.info("Unable to find crs, continuing with default CRS");
+            LOGGER.fine("Unable to find crs, continuing with default CRS");
         }
 
     }

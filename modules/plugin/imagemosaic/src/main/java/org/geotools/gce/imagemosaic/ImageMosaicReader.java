@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2006-2015, Open Source Geospatial Foundation (OSGeo)5
+ *    (C) 2006 - 2016, Open Source Geospatial Foundation (OSGeo)5
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -54,6 +54,7 @@ import org.geotools.coverage.grid.io.GranuleSource;
 import org.geotools.coverage.grid.io.HarvestedSource;
 import org.geotools.coverage.grid.io.OverviewPolicy;
 import org.geotools.coverage.grid.io.StructuredGridCoverage2DReader;
+import org.geotools.coverage.grid.io.footprint.MultiLevelROIProvider;
 import org.geotools.data.DataSourceException;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultFileServiceInfo;
@@ -69,8 +70,7 @@ import org.geotools.gce.imagemosaic.Utils.Prop;
 import org.geotools.gce.imagemosaic.catalog.CatalogConfigurationBean;
 import org.geotools.gce.imagemosaic.catalog.GranuleCatalog;
 import org.geotools.gce.imagemosaic.catalog.GranuleCatalogFactory;
-import org.geotools.gce.imagemosaic.catalog.MultiLevelROIProvider;
-import org.geotools.gce.imagemosaic.catalog.MultiLevelROIProviderFactory;
+import org.geotools.gce.imagemosaic.catalog.MultiLevelROIProviderMosaicFactory;
 import org.geotools.gce.imagemosaic.catalogbuilder.CatalogBuilderConfiguration;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -576,7 +576,7 @@ public class ImageMosaicReader extends AbstractGridCoverage2DReader implements S
                 
                 // Catalog initialization from datastore
                 GranuleCatalog catalog = null;
-                final Properties params = CatalogManager.createGranuleCatalogProperties(datastoreProperties);
+                final Properties params = ImageMosaicConfigHandler.createGranuleCatalogProperties(datastoreProperties);
 
                 // Since we are dealing with a catalog from an existing store, make sure to scan for all the typeNames on initialization
                 final Object typeNames=params.get(Utils.SCAN_FOR_TYPENAMES);
@@ -588,9 +588,10 @@ public class ImageMosaicReader extends AbstractGridCoverage2DReader implements S
                 if (beans.size() > 0) {
                     catalog = GranuleCatalogFactory.createGranuleCatalog(sourceURL, beans.get(0).getCatalogConfigurationBean(), params, getHints());
                 } else {
-                    catalog = CatalogManager.createGranuleCatalogFromDatastore(parent, datastoreProperties, true, getHints());
+                    catalog = ImageMosaicConfigHandler
+                            .createGranuleCatalogFromDatastore(parent, datastoreProperties, true, getHints());
                 } 
-                MultiLevelROIProvider rois = MultiLevelROIProviderFactory.createFootprintProvider(parent);
+                MultiLevelROIProvider rois = MultiLevelROIProviderMosaicFactory.createFootprintProvider(parent);
                 catalog.setMultiScaleROIProvider(rois);
                 if (granuleCatalog != null) {
                     granuleCatalog.dispose();
@@ -609,9 +610,10 @@ public class ImageMosaicReader extends AbstractGridCoverage2DReader implements S
             } else {
                 
                 // Old style code: we have a single MosaicConfigurationBean. Use that to create the catalog 
-                granuleCatalog = CatalogManager.createCatalog(sourceURL, configuration, this.hints);
+                granuleCatalog = ImageMosaicConfigHandler
+                        .createCatalog(sourceURL, configuration, this.hints);
                 File parent = DataUtilities.urlToFile(sourceURL).getParentFile();
-                MultiLevelROIProvider rois = MultiLevelROIProviderFactory.createFootprintProvider(parent);
+                MultiLevelROIProvider rois = MultiLevelROIProviderMosaicFactory.createFootprintProvider(parent);
                 granuleCatalog.setMultiScaleROIProvider(rois);
                 addRasterManager(configuration, true);
             }
@@ -1300,8 +1302,7 @@ public class ImageMosaicReader extends AbstractGridCoverage2DReader implements S
     }
 
     @Override
-    public void delete(boolean deleteData) throws IOException {
-        // TODO: Should we make it synchronized?
+    public synchronized void delete(boolean deleteData) throws IOException {
 
         String[] coverageNames = getGridCoverageNames();
         for (String coverageName: coverageNames) {
@@ -1310,7 +1311,11 @@ public class ImageMosaicReader extends AbstractGridCoverage2DReader implements S
 
         // Dispose before deleting to make sure any lock on files or resources is released
         dispose();
-        removeDB();
+
+        //drop the DB
+        granuleCatalog.drop();
+
+        // try to delete data
         if (deleteData) {
             // quick way: delete everything
             final File[] list = parentDirectory.listFiles();
@@ -1319,15 +1324,6 @@ public class ImageMosaicReader extends AbstractGridCoverage2DReader implements S
             }
         } else {
             finalizeCleanup();
-        }
-    }
-
-    private void removeDB() throws IOException {
-        final File parent = DataUtilities.urlToFile(sourceURL).getParentFile();
-
-        final File datastoreProperties = new File(parent, "datastore.properties");
-        if (datastoreProperties != null && datastoreProperties.exists() && datastoreProperties.canRead()) {
-            CatalogManager.dropDatastore(datastoreProperties);
         }
     }
 

@@ -51,14 +51,14 @@ exclude_patterns = ['**/.svn']
 
 # General information about the project.
 project = u'GeoTools'
-copyright = u'2015, GeoTools'
+copyright = u'2016, GeoTools'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = '15-SNAPSHOT'
+release = '16-SNAPSHOT'
 
 # The short X.Y version.
 version = release
@@ -215,3 +215,4 @@ latex_documents = [
 rst_epilog = """
 .. |branch| replace:: %s
 """ % branch
+>>>>>>> refs/remotes/upstream/master

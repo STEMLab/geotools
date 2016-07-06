@@ -16,7 +16,7 @@
   <parent>
     <groupId>org.geotools.xsd</groupId>
     <artifactId>xsd</artifactId>
-    <version>15-SNAPSHOT</version>
+    <version>16-SNAPSHOT</version>
   </parent>
 
 
@@ -76,7 +76,7 @@
       <dependency>
         <groupId>commons-collections</groupId>
         <artifactId>commons-collections</artifactId>
-        <version>3.1</version>
+        <version>3.2.2</version>  <!-- Updated for security (CVE-2015-8103) binary compatible with 3.1 -->
       </dependency>
     </dependencies>
   </dependencyManagement>

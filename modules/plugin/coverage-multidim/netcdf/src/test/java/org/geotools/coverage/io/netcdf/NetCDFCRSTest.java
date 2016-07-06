@@ -33,6 +33,8 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.operation.DefiningConversion;
 import org.geotools.referencing.operation.projection.AlbersEqualArea;
 import org.geotools.referencing.operation.projection.LambertConformal1SP;
+import org.geotools.referencing.operation.projection.MapProjection.AbstractProvider;
+import org.geotools.referencing.operation.projection.RotatedPole;
 import org.geotools.referencing.operation.projection.TransverseMercator;
 import org.geotools.test.TestData;
 import org.junit.After;
@@ -152,6 +154,38 @@ public class NetCDFCRSTest extends Assert {
                 } catch (Throwable t) {
                     // Does nothing
                 }
+            }
+        }
+    }
+
+    @Test
+    public void testRotatedPoleDataset() throws Exception {
+        final File file = TestData.file(this, "rotated-pole.nc");
+        NetCDFReader reader = null;
+        try {
+            reader = new NetCDFReader(file, null);
+            String[] coverages = reader.getGridCoverageNames();
+            CoordinateReferenceSystem crs = reader.getCoordinateReferenceSystem(coverages[0]);
+            NetCDFCoordinateReferenceSystemType crsType = NetCDFCoordinateReferenceSystemType
+                    .parseCRS(crs);
+            assertSame(NetCDFCoordinateReferenceSystemType.ROTATED_POLE, crsType);
+            assertSame(NetCDFCoordinateReferenceSystemType.NetCDFCoordinate.RLATLON_COORDS,
+                    crsType.getCoordinates());
+            assertSame(NetCDFProjection.ROTATED_POLE, crsType.getNetCDFProjection());
+            assertTrue(crs instanceof ProjectedCRS);
+            ProjectedCRS projectedCRS = ((ProjectedCRS) crs);
+            Projection projection = projectedCRS.getConversionFromBase();
+            MathTransform transform = projection.getMathTransform();
+            assertTrue(transform instanceof RotatedPole);
+            RotatedPole rotatedPole = (RotatedPole) transform;
+            ParameterValueGroup values = rotatedPole.getParameterValues();
+            assertEquals(-106.0, values.parameter(NetCDFUtilities.CENTRAL_MERIDIAN).doubleValue(),
+                    DELTA);
+            assertEquals(54.0, values.parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN).doubleValue(),
+                    DELTA);
+        } finally {
+            if (reader != null) {
+                reader.dispose();
             }
         }
     }
@@ -312,7 +346,21 @@ public class NetCDFCRSTest extends Assert {
             }
         }
     }
-    
+
+    /**
+     * Test that an unsupported grid_mapping_name falls back to WGS 84.
+     */
+    @Test
+    public void testUnsupportedGridMappingName() throws IOException {
+        File file = TestData.file(this, "unsupported-grid-mapping-name.nc");
+        NetCDFReader reader = new NetCDFReader(file, null);
+        assertNotNull(reader);
+        assertTrue(CRS.equalsIgnoreMetadata(reader.getCoordinateReferenceSystem(),
+                DefaultGeographicCRS.WGS84));
+        assertTrue(CRS.equalsIgnoreMetadata(reader.getCoordinateReferenceSystem("foo"),
+                DefaultGeographicCRS.WGS84));
+    }
+
     /**
      * Cleanup the custom definitions
      */

@@ -17,15 +17,8 @@
 package org.geotools.gce.imagemosaic;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
-import it.geosolutions.imageio.pam.PAMDataset;
-import it.geosolutions.imageio.pam.PAMDataset.PAMRasterBand;
-import it.geosolutions.imageio.pam.PAMParser;
-import it.geosolutions.imageio.utilities.ImageIOUtilities;
-import it.geosolutions.jaiext.JAIExt;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
@@ -65,10 +58,7 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import javax.media.jai.RenderedOp;
-import javax.swing.JFrame;
-
-import junit.framework.JUnit4TestAdapter;
-import junit.textui.TestRunner;
+import javax.swing.*;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -146,6 +136,14 @@ import org.opengis.referencing.operation.TransformException;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LinearRing;
+
+import it.geosolutions.imageio.pam.PAMDataset;
+import it.geosolutions.imageio.pam.PAMDataset.PAMRasterBand;
+import it.geosolutions.imageio.pam.PAMParser;
+import it.geosolutions.imageio.utilities.ImageIOUtilities;
+import it.geosolutions.jaiext.JAIExt;
+import junit.framework.JUnit4TestAdapter;
+import junit.textui.TestRunner;
 
 /**
  * Testing {@link ImageMosaicReader}.
@@ -1426,7 +1424,7 @@ public class ImageMosaicReaderTest extends Assert{
         File propFile = new File(covFile, "time_domainsRanges.properties");
         // Ensure the file exists
         assertTrue(propFile.exists());
-        Properties props = Utils.loadPropertiesFromURL(DataUtilities.fileToURL(propFile));
+        Properties props = CoverageUtilities.loadPropertiesFromURL(DataUtilities.fileToURL(propFile));
         // ImageReaderSpi property
         String suggestedSpi = props.getProperty(Utils.Prop.SUGGESTED_SPI);
         // Check if the property exists
@@ -2994,6 +2992,7 @@ public class ImageMosaicReaderTest extends Assert{
         try {
 
             reader = new ImageMosaicReader(timeElevURL);
+            assertNotNull(reader);
 
             // delete metadata only (auxiliary files, DB entries, ...)
             File[] files = workDir.listFiles();
@@ -3002,7 +3001,9 @@ public class ImageMosaicReaderTest extends Assert{
             files = workDir.listFiles();
             assertEquals(4, files.length);
         } finally {
-            reader.dispose();
+            if(reader!=null){
+                reader.dispose();
+            }
         }
     }
 
@@ -3919,10 +3920,10 @@ public class ImageMosaicReaderTest extends Assert{
         }
     }
 
-        @AfterClass
+    @AfterClass
 	public static void close(){
 		System.clearProperty("org.geotools.referencing.forceXY");
-	        CRS.reset("all");
+		CRS.reset("all");
 	}
         
     /**
@@ -4208,4 +4209,5 @@ public class ImageMosaicReaderTest extends Assert{
             assertTrue(supportFiles.contains(myFile));
         }
     }
+
 }

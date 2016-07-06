@@ -93,9 +93,9 @@
     <test.forkMode>once</test.forkMode>
     <test.args></test.args>
     <src.output>${basedir}/target</src.output>
-    <imageio.ext.version>1.1.13</imageio.ext.version>
-    <jaiext.version>1.0.8</jaiext.version>
-    <netcdf.version>4.6.2</netcdf.version>
+    <imageio.ext.version>1.1.15</imageio.ext.version>
+    <jaiext.version>1.0.11</jaiext.version>
+    <netcdf.version>4.6.6</netcdf.version>
     <jt.version>1.4.0</jt.version>
     <jvm.opts></jvm.opts>
     <maven.build.timestamp.format>dd-MMM-yyyy HH:mm</maven.build.timestamp.format>
@@ -198,7 +198,7 @@
   <groupId>org.geotools</groupId>
   <artifactId>geotools</artifactId>
   <packaging>pom</packaging>
-  <version>15-SNAPSHOT</version>
+  <version>16-SNAPSHOT</version>
   <name>GeoTools</name>
 
   <scm>
@@ -304,7 +304,7 @@
       <name>Ian Turton</name>
       <id>ianturton</id>
       <email>ianturton@users.sourceforge.net</email>
-      <organization>Envitia Ltd</organization>
+      <organization>Astun Technology</organization>
       <roles>
         <role>Java Developer</role>
         <role>Project Management Committee (PMC) Member</role>
@@ -859,7 +859,7 @@
       <dependency>
         <groupId>commons-collections</groupId>
         <artifactId>commons-collections</artifactId>
-        <version>3.1</version>  <!-- Same as the dependency in commons-pool -->
+        <version>3.2.2</version>  <!-- Updated for security (CVE-2015-8103) binary compatible with 3.1 -->
       </dependency>
       <dependency>
         <groupId>commons-pool</groupId>

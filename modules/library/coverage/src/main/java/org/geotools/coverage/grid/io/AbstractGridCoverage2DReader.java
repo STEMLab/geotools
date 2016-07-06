@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  * 
- *    (C) 2005-2015, Open Source Geospatial Foundation (OSGeo)
+ *    (C) 2005 - 2016, Open Source Geospatial Foundation (OSGeo)
  *    
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -53,6 +53,7 @@ import org.geotools.coverage.grid.GeneralGridEnvelope;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.io.footprint.MultiLevelROIProvider;
 import org.geotools.data.DataSourceException;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultFileResourceInfo;
@@ -618,7 +619,7 @@ public abstract class AbstractGridCoverage2DReader implements GridCoverage2DRead
     protected final void decimationOnReadingControl(String coverageName, Integer imageChoice, ImageReadParam readP, double[] requestedRes) {
         {
             int w, h;
-            double selectedRes[] = new double[2];
+            double[] selectedRes = new double[2];
             final int choice = imageChoice.intValue();
             if (choice == 0) {
                 // highest resolution
@@ -1409,7 +1410,9 @@ public abstract class AbstractGridCoverage2DReader implements GridCoverage2DRead
             }
         }
     }
-    
-    
+
+    protected MultiLevelROIProvider getMultiLevelROIProvider (String coverageName) {
+        throw new UnsupportedOperationException("The abstract reader doesn't implement this method yet");
+    }
 
 }
