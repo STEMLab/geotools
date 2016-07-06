@@ -18,11 +18,8 @@ package org.geotools.xml;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,11 +44,8 @@ import org.eclipse.emf.common.notify.impl.AdapterImpl;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.emf.ecore.resource.URIConverter;
 import org.eclipse.emf.ecore.resource.URIHandler;
-import org.eclipse.emf.ecore.resource.impl.ExtensibleURIConverterImpl;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
-import org.eclipse.emf.ecore.resource.impl.URIHandlerImpl;
 import org.eclipse.xsd.XSDAttributeDeclaration;
 import org.eclipse.xsd.XSDAttributeGroupContent;
 import org.eclipse.xsd.XSDAttributeGroupDefinition;
@@ -65,11 +59,13 @@ import org.eclipse.xsd.XSDModelGroup;
 import org.eclipse.xsd.XSDModelGroupDefinition;
 import org.eclipse.xsd.XSDNamedComponent;
 import org.eclipse.xsd.XSDParticle;
+import org.eclipse.xsd.XSDParticleContent;
 import org.eclipse.xsd.XSDSchema;
 import org.eclipse.xsd.XSDSchemaContent;
 import org.eclipse.xsd.XSDSchemaDirective;
 import org.eclipse.xsd.XSDSimpleTypeDefinition;
 import org.eclipse.xsd.XSDTypeDefinition;
+import org.eclipse.xsd.XSDWildcard;
 import org.eclipse.xsd.impl.XSDImportImpl;
 import org.eclipse.xsd.impl.XSDSchemaImpl;
 import org.eclipse.xsd.util.XSDConstants;
@@ -90,7 +86,6 @@ import org.picocontainer.PicoVisitor;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import org.eclipse.xsd.XSDWildcard;
 
 /**
  * Utility class for performing various operations.
@@ -995,14 +990,31 @@ public class Schemas {
                     if (decl.isElementDeclarationReference()) {
                         decl = decl.getResolvedElementDeclaration();
                     }
-
                     if (decl == fElement) {
+                        
+                        
+                        if(decl.getName().equalsIgnoreCase("Geometry2D")) {
+                            System.out.println();
+                        }
+                        
                         if (particle.isSetMinOccurs()) {
                             minOccurs.add(new Integer(particle.getMinOccurs()));
-                        } else if (particle.getContainer() instanceof XSDModelGroup
-                                && particle.getContainer().getContainer() instanceof XSDParticle) {
-                            particle = (XSDParticle) particle.getContainer().getContainer();
-                            minOccurs.add(new Integer(particle.getMinOccurs()));
+                        } else if (particle.getContainer() instanceof XSDModelGroup) {
+                            XSDModelGroup modelGroup = (XSDModelGroup) particle.getContainer();
+                            if(modelGroup.getContainer() instanceof XSDParticle) {
+                                particle = (XSDParticle) particle.getContainer().getContainer();
+                                minOccurs.add(new Integer(particle.getMinOccurs()));
+                            }
+                            else if(modelGroup.getContainer() instanceof XSDModelGroupDefinition) {
+                                XSDModelGroupDefinition modelGroupDefinition = (XSDModelGroupDefinition) modelGroup.getContainer();
+                                modelGroup = modelGroupDefinition.getResolvedModelGroupDefinition().getModelGroup();
+                                
+                                System.out.println(modelGroup.getContainer());
+                                minOccurs.add(1);
+                            }
+                            else {
+                                minOccurs.add(1);
+                            }
                         } else {
                             minOccurs.add(1);
                         }
