@@ -27,6 +27,7 @@
   <!-- ==================================================== -->
   <groupId>org.geotools</groupId>
   <artifactId>gt-jts-wrapper</artifactId>
+  <version>16-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>ISO 19107 implementation using JTS</name>
   

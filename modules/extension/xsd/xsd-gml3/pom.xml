@@ -110,8 +110,8 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-jts-wrapper</artifactId>
-      <version>${project.version}</version>
+  	  <artifactId>gt-jts-wrapper</artifactId>
+  	  <version>${project.version}</version>
     </dependency>    
     <dependency>
       <groupId>org.geotools</groupId>
