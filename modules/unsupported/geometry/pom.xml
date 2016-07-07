@@ -16,7 +16,7 @@
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>unsupported</artifactId>
-    <version>15-SNAPSHOT</version>
+    <version>16-SNAPSHOT</version>
   </parent>
 
 
@@ -133,7 +133,7 @@
           <excludes>
             <exclude>**/RunStoredTest.java</exclude>
           </excludes>
-          <testFailureIgnore>${allow.test.failure.ignore}</testFailureIgnore>
+          <testFailureIgnore>true</testFailureIgnore>
         </configuration>
       </plugin>
     </plugins>
