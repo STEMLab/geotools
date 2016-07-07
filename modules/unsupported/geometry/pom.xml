@@ -27,7 +27,12 @@
   <artifactId>gt-geometry</artifactId>
   <packaging>jar</packaging>
   <name>Geometries</name>
-
+  
+  <properties>
+    <allow.test.skip>true</allow.test.skip>
+    <allow.test.failure.ignore>true</allow.test.failure.ignore>
+    <maven.test.skip>true</maven.test.skip>
+  </properties>
 
   <description>
     Implementations of ISO 19107 (Spatial Schema).
@@ -133,7 +138,7 @@
           <excludes>
             <exclude>**/RunStoredTest.java</exclude>
           </excludes>
-          <testFailureIgnore>true</testFailureIgnore>
+          <testFailureIgnore>${allow.test.failure.ignore}</testFailureIgnore>
         </configuration>
       </plugin>
     </plugins>
