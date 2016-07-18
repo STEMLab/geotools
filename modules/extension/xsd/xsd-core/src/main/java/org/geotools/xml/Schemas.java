@@ -41,6 +41,7 @@ import org.eclipse.emf.common.notify.AdapterFactory;
 import org.eclipse.emf.common.notify.Notifier;
 import org.eclipse.emf.common.notify.impl.AdapterFactoryImpl;
 import org.eclipse.emf.common.notify.impl.AdapterImpl;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -51,6 +52,7 @@ import org.eclipse.xsd.XSDAttributeGroupContent;
 import org.eclipse.xsd.XSDAttributeGroupDefinition;
 import org.eclipse.xsd.XSDAttributeUse;
 import org.eclipse.xsd.XSDComplexTypeDefinition;
+import org.eclipse.xsd.XSDCompositor;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDFactory;
 import org.eclipse.xsd.XSDImport;
@@ -982,38 +984,37 @@ public class Schemas {
         XSDElementDeclaration element) {
         final XSDElementDeclaration fElement = element;
         final ArrayList minOccurs = new ArrayList();
-
+        
         ElementVisitor visitor = new ElementVisitor() {
                 public void visit(XSDParticle particle) {
                     XSDElementDeclaration decl = (XSDElementDeclaration) particle.getContent();
-
                     if (decl.isElementDeclarationReference()) {
                         decl = decl.getResolvedElementDeclaration();
                     }
+                    
                     if (decl == fElement) {
-                        
-                        
-                        if(decl.getName().equalsIgnoreCase("Geometry2D")) {
-                            System.out.println();
-                        }
-                        
                         if (particle.isSetMinOccurs()) {
                             minOccurs.add(new Integer(particle.getMinOccurs()));
                         } else if (particle.getContainer() instanceof XSDModelGroup) {
                             XSDModelGroup modelGroup = (XSDModelGroup) particle.getContainer();
                             if(modelGroup.getContainer() instanceof XSDParticle) {
-                                particle = (XSDParticle) particle.getContainer().getContainer();
+                                particle = (XSDParticle) modelGroup.getContainer();
                                 minOccurs.add(new Integer(particle.getMinOccurs()));
                             }
-                            else if(modelGroup.getContainer() instanceof XSDModelGroupDefinition) {
-                                XSDModelGroupDefinition modelGroupDefinition = (XSDModelGroupDefinition) modelGroup.getContainer();
-                                modelGroup = modelGroupDefinition.getResolvedModelGroupDefinition().getModelGroup();
-                                
-                                System.out.println(modelGroup.getContainer());
-                                minOccurs.add(1);
-                            }
                             else {
-                                minOccurs.add(1);
+                                int compositor = modelGroup.getCompositor().getValue();
+                                int min;
+                                switch(compositor) {
+                                    case XSDCompositor.ALL:
+                                    case XSDCompositor.CHOICE: // technically if there was only one child this should be 1 but I'm not sure If we can determine that here
+                                        min = 0;
+                                        break;
+                                    case XSDCompositor.SEQUENCE:
+                                    default: // error
+                                        min = 1;
+                                        break;
+                                }
+                                minOccurs.add(min);
                             }
                         } else {
                             minOccurs.add(1);
