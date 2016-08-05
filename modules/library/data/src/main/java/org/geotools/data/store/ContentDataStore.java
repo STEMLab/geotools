@@ -485,9 +485,8 @@ public abstract class ContentDataStore implements DataStore {
      */
     public final FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(String typeName, Transaction tx)
         throws IOException {
-    
+        
         ContentFeatureStore featureStore = ensureFeatureStore(typeName,tx);
- 
         FeatureWriter<SimpleFeatureType, SimpleFeature> writer = featureStore.getWriter( Filter.INCLUDE , WRITER_ADD );
         
         // ensure we are at the "end" as we are being asked to return this in "append" mode
