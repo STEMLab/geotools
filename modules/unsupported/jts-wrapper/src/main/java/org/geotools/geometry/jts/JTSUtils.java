@@ -17,9 +17,11 @@
 package org.geotools.geometry.jts;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.geotools.factory.Hints;
@@ -27,6 +29,7 @@ import org.geotools.geometry.GeometryFactoryFinder;
 import org.geotools.geometry.jts.spatialschema.geometry.DirectPositionImpl;
 import org.geotools.geometry.jts.spatialschema.geometry.geometry.GeometryFactoryImpl;
 import org.geotools.geometry.jts.spatialschema.geometry.primitive.PrimitiveFactoryImpl;
+import org.geotools.geometry.jts.spatialschema.geometry.primitive.SurfaceImpl;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.Envelope;
 import org.opengis.geometry.Geometry;
@@ -346,6 +349,18 @@ public final class JTSUtils {
                 Polygon polygon = (Polygon) patch;
                 com.vividsolutions.jts.geom.Polygon jtsPolygon = polygonToJTSPolygon(polygon);
                 
+                Object userData = ((SurfaceImpl) surface).getUserData();
+                if (userData != null) {
+                    Object newUserData = null;
+                    if (userData instanceof Map) {
+                        newUserData = new HashMap<Object, Object>();
+                        ((Map) newUserData).putAll((Map) userData);
+                    } else {
+                        newUserData = userData;
+                    }
+                    jtsPolygon.setUserData(newUserData);
+                }
+                
                 polygons.add(jtsPolygon);
             }
         }
@@ -418,6 +433,18 @@ public final class JTSUtils {
         SurfaceBoundary boundary = pf.createSurfaceBoundary(externalRing,
                 internalRings);
         Surface surface = pf.createSurface(boundary);
+        
+        Object userData = jtsPolygon.getUserData();
+        if (userData != null) {
+            Object newUserData = null;
+            if (userData instanceof Map) {
+                newUserData = new HashMap<Object, Object>();
+                ((Map) newUserData).putAll((Map) userData);
+            } else {
+                newUserData = userData;
+            }
+            ((SurfaceImpl) surface).setUserData(newUserData);
+        }
 
         return surface;
     }

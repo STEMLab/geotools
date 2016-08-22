@@ -78,6 +78,12 @@ public abstract class GeometryImpl
      * we can also invalidate that of our parent.
      */
     private JTSGeometry parent;
+    
+    /**
+     * An object reference which can be used to carry ancillary data defined
+     * by the client.
+     */
+    protected Object userData;
 
     
     /**
@@ -168,6 +174,29 @@ public abstract class GeometryImpl
      */
     public final CoordinateReferenceSystem getCoordinateReferenceSystem() {
         return coordinateReferenceSystem;
+    }
+    
+    /**
+     * Gets the user data object for this geometry, if any.
+     *
+     * @return the user data object, or null if none set
+     */
+    public Object getUserData() {
+        return userData;
+    }
+    
+    /**
+     * A simple scheme for applications to add their own custom data to a Geometry.
+     * An example use might be to add an object representing a identification of a Geometry.
+     * <p>
+     * Note that user data objects are not present in geometries created by
+     * construction methods.
+     *
+     * @param userData an object, the semantics for which are defined by the
+     * application using this Geometry
+     */
+    public void setUserData(Object userData) {
+        this.userData = userData;
     }
 
     /**
