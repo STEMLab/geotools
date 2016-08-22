@@ -65,9 +65,9 @@ public class ShellPropertyTypeBinding extends GeometryPropertyTypeBinding {
 
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        Shell surface = (Shell)node.getChildValue(Shell.class);
+        Shell shell = (Shell)node.getChildValue(Shell.class);
         
-        return surface;
+        return shell;
     }
     
     @Override
@@ -86,7 +86,7 @@ public class ShellPropertyTypeBinding extends GeometryPropertyTypeBinding {
 
     @Override
     /**
-     * A ISOGeometry can't have properties.
+     * A ISOGeometry shell can't have properties.
      */
     public List getProperties(Object object) throws Exception {
         return null;

@@ -21,13 +21,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringReader;
 import java.net.URL;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
-import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.xsd.XSDSchema;
@@ -41,6 +40,8 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.w3c.dom.Document;
 
 import com.vividsolutions.jts.geom.Point;
+
+import junit.framework.TestCase;
 
 /**
  * 
@@ -111,7 +112,8 @@ public class GMLParsingTest extends TestCase {
                 + "</gml:Point>";
         try {
             Point point = (Point) parser.parse(new StringReader(text));
-            return (CoordinateReferenceSystem) point.getUserData();
+            //return (CoordinateReferenceSystem) point.getUserData();
+            return (CoordinateReferenceSystem) ((Map) point.getUserData()).get(CoordinateReferenceSystem.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

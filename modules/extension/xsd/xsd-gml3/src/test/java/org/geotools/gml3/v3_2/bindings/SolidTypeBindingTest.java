@@ -72,7 +72,7 @@ public class SolidTypeBindingTest extends GML32TestSupport {
         GML3SolidMockData.solid(document, document, true);
         Solid solid = (Solid) parse();
         Geometry geometry = (Geometry) solid;
-        Document dom = encode(geometry, GML.Solid);
+        Document dom = encode(geometry, GML.solidProperty);
         
         NodeList children = dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Solid.getLocalPart());
         assertEquals(1, children.getLength());

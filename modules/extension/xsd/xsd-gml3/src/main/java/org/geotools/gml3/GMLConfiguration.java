@@ -75,6 +75,7 @@ import org.geotools.gml3.bindings.PolygonPropertyTypeBinding;
 import org.geotools.gml3.bindings.PolygonTypeBinding;
 import org.geotools.gml3.bindings.ReferenceTypeBinding;
 import org.geotools.gml3.bindings.RingTypeBinding;
+import org.geotools.gml3.bindings.SolidPropertyTypeBinding;
 import org.geotools.gml3.bindings.SolidTypeBinding;
 import org.geotools.gml3.bindings.SurfaceArrayPropertyTypeBinding;
 import org.geotools.gml3.bindings.SurfacePatchArrayPropertyTypeBinding;
@@ -346,6 +347,8 @@ public class GMLConfiguration extends Configuration {
             container.registerComponentImplementation(GML.SurfacePropertyType,
                     org.geotools.gml3.bindings.ext.SurfacePropertyTypeBindingExt.class);
             container.registerComponentImplementation(GML.CompositeSurfaceType, CompositeSurfaceTypeBinding.class);
+            //container.registerComponentImplementation(GML.AbstractSolidType, AbstractSolidTypeBinding.class);
+            container.registerComponentImplementation(GML.SolidPropertyType, SolidPropertyTypeBinding.class);
             container.registerComponentImplementation(GML.SolidType, SolidTypeBinding.class);
         }
         

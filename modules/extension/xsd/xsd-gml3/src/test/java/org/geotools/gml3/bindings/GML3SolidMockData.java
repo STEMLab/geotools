@@ -40,6 +40,12 @@ public class GML3SolidMockData extends GML3MockData {
             /* right surface */
             Element polygon = element(qName("Polygon"), document, surfaceMember);
             polygon.setAttribute("srsDimension", "3");
+            /*
+             * for Attribute parsing test
+             */
+            polygon.setAttribute("id", "POLY_ID1");
+            polygon.setAttribute("name", "POLY_NAME1");
+            polygon.setAttribute("description", "POLY_DESCRIPTION1");
     
             Element exterior = element(qName("exterior"), document, polygon);
             Element linearRing = element(qName("LinearRing"), document, exterior);
@@ -145,6 +151,13 @@ public class GML3SolidMockData extends GML3MockData {
     public static Element solid(Document document, Node parent, boolean withInterior, boolean isGML32) {
         Element solid = element(qName("Solid"), document, parent);
         solid.setAttribute("srsDimension", "3");
+        
+        /*
+         * for Attribute parsing test
+         */
+        solid.setAttribute("id", "SOLID_ID1");
+        solid.setAttribute("name", "SOLID_NAME1");
+        solid.setAttribute("description", "SOLID_DESCRIPTION1");
         
         Element exterior = element(qName("exterior"), document, solid);
         //compositeSurface(document, exterior);

@@ -19,6 +19,7 @@ package org.geotools.gml3.v3_2.bindings;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.namespace.QName;
 
@@ -99,7 +100,15 @@ public class ShellTypeBinding extends AbstractComplexBinding {
         }
         PrimitiveFactoryImpl pfImpl = (PrimitiveFactoryImpl) pf;
         
-        CoordinateReferenceSystem crs = (CoordinateReferenceSystem) ((com.vividsolutions.jts.geom.Polygon) polygons.get(0)).getUserData();
+        CoordinateReferenceSystem crs = null;
+        Object userData = ((com.vividsolutions.jts.geom.Polygon) polygons.get(0)).getUserData();
+        if (userData != null) {
+            if (userData instanceof CoordinateReferenceSystem) {
+                crs = (CoordinateReferenceSystem) userData;
+            } else if (userData instanceof CoordinateReferenceSystem) {
+                crs = (CoordinateReferenceSystem) ((Map) userData).get(CoordinateReferenceSystem.class);
+            }
+        }
         if (crs == null) {
             crs = (CoordinateReferenceSystem) DefaultGeographicCRS.WGS84_3D;
         }

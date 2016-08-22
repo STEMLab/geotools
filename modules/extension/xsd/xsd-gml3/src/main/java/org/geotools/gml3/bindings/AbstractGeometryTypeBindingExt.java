@@ -17,10 +17,12 @@
 package org.geotools.gml3.bindings;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.namespace.QName;
 
 import org.geotools.gml2.SrsSyntax;
+import org.geotools.gml2.bindings.GML2EncodingUtils;
 import org.geotools.xml.Configuration;
 import org.geotools.xml.ElementInstance;
 import org.geotools.xml.Node;
@@ -46,20 +48,26 @@ public class AbstractGeometryTypeBindingExt extends AbstractGeometryTypeBinding 
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         //set the crs
-        if (value instanceof Geometry) {
+        if (value instanceof Geometry ||
+                value instanceof org.geotools.geometry.iso.root.GeometryImpl) {
             CoordinateReferenceSystem crs = GML3ParsingUtils.crs(node);
-
             if (crs != null) {
-                Geometry geometry = (Geometry) value;
-                geometry.setUserData(crs);
-                /*
-                if (geometry.getUserData() == null) {
-                    geometry.setUserData(new HashMap());
-                }
-                if (geometry.getUserData() instanceof Map) {
-                    ((Map) geometry.getUserData()).put("crs", crs);
-                }
-                */
+                GML3ParsingUtils.setCRS(value, crs);
+            }
+            
+            String id = GML3ParsingUtils.id(node);
+            if (id != null) {
+                GML3ParsingUtils.setID(value, id);
+            }
+            
+            String name = GML3ParsingUtils.name(node);
+            if (name != null) {
+                GML3ParsingUtils.setName(value, name);
+            }
+            
+            String description = GML3ParsingUtils.description(node);
+            if (description != null) {
+                GML3ParsingUtils.setDescription(value, description);
             }
         }
 
@@ -69,10 +77,29 @@ public class AbstractGeometryTypeBindingExt extends AbstractGeometryTypeBinding 
 
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
-        if (object instanceof org.geotools.geometry.iso.root.GeometryImpl) {
-            return null;
+        if ("srsName".equals(name.getLocalPart())) {
+            CoordinateReferenceSystem crs = GML3EncodingUtils.getCRS(object);
+            if (crs != null) {
+                return GML3EncodingUtils.toURI(crs, srsSyntax);
+            }
         }
         
-        return super.getProperty(object, name);
+        if ("srsDimension".equals(name.getLocalPart())) {
+            return GML3EncodingUtils.getGeometryDimension(object, config);
+        }
+        
+        if ("id".equals(name.getLocalPart())) {
+            return GML3EncodingUtils.getID(object);
+        }
+
+        if ("name".equals(name.getLocalPart())) {
+            return GML3EncodingUtils.getName(object);
+        }
+        
+        if ("description".equals(name.getLocalPart())) {
+            return GML3EncodingUtils.getDescription(object);
+        }
+        
+        return null;
     }
 }
